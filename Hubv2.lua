@@ -1,20 +1,21 @@
-local Luna = loadstring(game:HttpGet("https://raw.githubusercontent.com/RobloxAvatar/Luna/main/Luna.lua"))()
+local Rayfield = loadstring(game:HttpGet("https://sirius.menu/rayfield", true))()
 
 local Players = game:GetService("Players")
 local UIS = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
+
 local player = Players.LocalPlayer
 local camera = workspace.CurrentCamera
 
-local Window = Luna:CreateWindow({
-    Name = "Raymond Hub (Luna)",
-    Theme = "Dark",
-    Keybind = Enum.KeyCode.K
+local Window = Rayfield:CreateWindow({
+    Name = "Raymond Hub",
+    LoadingTitle = "Rayfield UI",
+    LoadingSubtitle = "by raymond",
+    ToggleUIKeybind = "K"
 })
 
-local MainTab = Window:CreateTab("Main")
-local FlyTab = Window:CreateTab("Fly")
-local TPTab = Window:CreateTab("Teleport")
+local MainTab = Window:CreateTab("🏠 Main")
+local FlyTab = Window:CreateTab("🕊 Fly")
 
 local infJump = false
 local flying = false
@@ -28,9 +29,9 @@ end
 
 MainTab:CreateSlider({
     Name = "Walk Speed",
-    Min = 16,
-    Max = 300,
-    Default = 16,
+    Range = {16,300},
+    Increment = 1,
+    CurrentValue = 16,
     Callback = function(v)
         local _, hum = getChar()
         hum.WalkSpeed = v
@@ -39,7 +40,7 @@ MainTab:CreateSlider({
 
 MainTab:CreateToggle({
     Name = "Infinite Jump",
-    Default = false,
+    CurrentValue = false,
     Callback = function(v)
         infJump = v
     end
@@ -54,18 +55,16 @@ end)
 
 FlyTab:CreateToggle({
     Name = "Enable Fly",
-    Default = false,
+    CurrentValue = false,
     Callback = function(v)
         local _, hum, hrp = getChar()
         flying = v
         if v then
-            bv = Instance.new("BodyVelocity")
+            bv = Instance.new("BodyVelocity", hrp)
             bv.MaxForce = Vector3.new(1e5,1e5,1e5)
-            bv.Parent = hrp
 
-            bg = Instance.new("BodyGyro")
+            bg = Instance.new("BodyGyro", hrp)
             bg.MaxTorque = Vector3.new(1e5,1e5,1e5)
-            bg.Parent = hrp
 
             hum.PlatformStand = true
         else
@@ -78,9 +77,9 @@ FlyTab:CreateToggle({
 
 FlyTab:CreateSlider({
     Name = "Fly Speed",
-    Min = 20,
-    Max = 200,
-    Default = 60,
+    Range = {20,200},
+    Increment = 5,
+    CurrentValue = 60,
     Callback = function(v)
         flySpeed = v
     end
@@ -97,15 +96,3 @@ RunService.RenderStepped:Connect(function()
         bg.CFrame = camera.CFrame
     end
 end)
-
-TPTab:CreateTextbox({
-    Name = "Teleport to Player",
-    Placeholder = "Player Name",
-    Callback = function(name)
-        local target = Players:FindFirstChild(name)
-        if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
-            local _, _, hrp = getChar()
-            hrp.CFrame = target.Character.HumanoidRootPart.CFrame + Vector3.new(0,5,0)
-        end
-    end
-})
