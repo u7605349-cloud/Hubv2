@@ -210,8 +210,8 @@ FunTab:CreateInput({
     RemoveTextAfterFocusLost=true,
     Callback=function(playerName)
         if playerName and playerName~="" then
-            local target=game.Players:FindFirstChild(playerName)
-            local char=game.Players.LocalPlayer.Character
+            local target=Players:FindFirstChild(playerName)
+            local char=Players.LocalPlayer.Character
             if target and target.Character and char and char:FindFirstChild("HumanoidRootPart") then
                 char:SetPrimaryPartCFrame(target.Character.HumanoidRootPart.CFrame+Vector3.new(0,5,0))
                 Rayfield:Notify({Title="Teleported", Content="Teleported to "..target.Name, Duration=4})
@@ -225,15 +225,16 @@ FunTab:CreateInput({
 })
 
 -- Hide Other Players Toggle
+local FunTabHideToggleValue = false
+
 local function hideCharacterForOthers()
     for _, player in pairs(Players:GetPlayers()) do
         if player ~= Players.LocalPlayer and player.Character then
             for _, part in pairs(player.Character:GetDescendants()) do
                 if part:IsA("BasePart") or part:IsA("MeshPart") then
                     part.Transparency = 1
-                    if part:FindFirstChildOfClass("Decal") then
-                        part:FindFirstChildOfClass("Decal").Transparency = 1
-                    end
+                    local decal = part:FindFirstChildOfClass("Decal")
+                    if decal then decal.Transparency = 1 end
                 elseif part:IsA("BillboardGui") or part:IsA("SurfaceGui") then
                     part.Enabled = false
                 end
@@ -242,6 +243,39 @@ local function hideCharacterForOthers()
     end
 end
 
+local function showCharacterForOthers()
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= Players.LocalPlayer and player.Character then
+            for _, part in pairs(player.Character:GetDescendants()) do
+                if part:IsA("BasePart") or part:IsA("MeshPart") then
+                    part.Transparency = 0
+                    local decal = part:FindFirstChildOfClass("Decal")
+                    if decal then decal.Transparency = 0 end
+                elseif part:IsA("BillboardGui") or part:IsA("SurfaceGui") then
+                    part.Enabled = true
+                end
+            end
+        end
+    end
+end
+
 Players.PlayerAdded:Connect(function(plr)
     plr.CharacterAdded:Connect(function()
-        hideCharacterForOthers
+        if FunTabHideToggleValue then
+            hideCharacterForOthers()
+        end
+    end)
+end)
+
+FunTab:CreateToggle({
+    Name = "Hide Other Players",
+    CurrentValue = false,
+    Callback = function(Value)
+        FunTabHideToggleValue = Value
+        if Value then
+            hideCharacterForOthers()
+        else
+            showCharacterForOthers()
+        end
+    end
+})
