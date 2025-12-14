@@ -171,7 +171,7 @@ game:GetService("UserInputService").JumpRequest:Connect(function()
             char.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
         end
     end
-end)
+end})
 
 FunTab:CreateButton({Name="Chat Spam Hello", Callback=function()
     for i=1,5 do
@@ -224,52 +224,24 @@ FunTab:CreateInput({
     end
 })
 
--- Blox Fruits Tab (Auto Farm + Kill Aura)
-local BloxFarmTab = Window:CreateTab("🤖 Blox Fruits", nil)
-BloxFarmTab:CreateSection("Auto Farm & Kill Aura")
-
-local autoFarmEnabled = false
-local killAuraRadius = 20
-
-BloxFarmTab:CreateToggle({
-    Name = "Enable Auto Farm + Kill Aura",
-    CurrentValue = false,
-    Callback = function(value)
-        autoFarmEnabled = value
-        if autoFarmEnabled then
-            spawn(function()
-                while autoFarmEnabled and task.wait(0.3) do
-                    local player = game.Players.LocalPlayer
-                    local char = player.Character
-                    if not char or not char:FindFirstChild("HumanoidRootPart") then continue end
-
-                    local enemiesFolder = workspace:FindFirstChild("Enemies")
-                    if not enemiesFolder then continue end
-
-                    for _, npc in pairs(enemiesFolder:GetChildren()) do
-                        if npc:FindFirstChild("Humanoid") and npc:FindFirstChild("HumanoidRootPart") and npc.Humanoid.Health > 0 then
-                            local distance = (npc.HumanoidRootPart.Position - char.HumanoidRootPart.Position).Magnitude
-                            if distance <= killAuraRadius then
-                                char.HumanoidRootPart.CFrame = npc.HumanoidRootPart.CFrame + Vector3.new(0,3,0)
-                                pcall(function()
-                                    game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("RegisterAttack")
-                                end)
-                            end
-                        end
+-- Hide Other Players Toggle
+local function hideCharacterForOthers()
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= Players.LocalPlayer and player.Character then
+            for _, part in pairs(player.Character:GetDescendants()) do
+                if part:IsA("BasePart") or part:IsA("MeshPart") then
+                    part.Transparency = 1
+                    if part:FindFirstChildOfClass("Decal") then
+                        part:FindFirstChildOfClass("Decal").Transparency = 1
                     end
+                elseif part:IsA("BillboardGui") or part:IsA("SurfaceGui") then
+                    part.Enabled = false
                 end
-            end)
+            end
         end
     end
-})
+end
 
-BloxFarmTab:CreateButton({
-    Name = "Stop Auto Farm",
-    Callback = function()
-        autoFarmEnabled = false
-    end
-})
-
-BloxFarmTab:CreateLabel({
-    Name = "Kill Aura radius: 20 studs. Teleports on top of Blox Fruits enemies automatically."
-})
+Players.PlayerAdded:Connect(function(plr)
+    plr.CharacterAdded:Connect(function()
+        hideCharacterForOthers
