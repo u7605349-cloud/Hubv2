@@ -133,3 +133,39 @@ FlyTab:CreateButton({
         end)
     end
 })
+
+local Players = game:GetService("Players")
+local Player = Players.LocalPlayer
+
+local function Char()
+    return Player.Character or Player.CharacterAdded:Wait()
+end
+
+local GodTab = Window:CreateTab("🛡 Godmode", nil)
+GodTab:CreateSection("Protection")
+
+local god = false
+GodTab:CreateToggle({
+    Name = "Godmode",
+    CurrentValue = false,
+    Callback = function(v)
+        god = v
+
+        local function apply()
+            if not god then return end
+            local h = Char():WaitForChild("Humanoid")
+            h.MaxHealth = math.huge
+            h.Health = math.huge
+            h:SetStateEnabled(Enum.HumanoidStateType.Dead, false)
+
+            h:GetPropertyChangedSignal("Health"):Connect(function()
+                if god and h.Health < h.MaxHealth then
+                    h.Health = h.MaxHealth
+                end
+            end)
+        end
+
+        apply()
+        Player.CharacterAdded:Connect(apply)
+    end
+})
