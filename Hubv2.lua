@@ -224,40 +224,52 @@ FunTab:CreateInput({
     end
 })
 
--- Auto Farm Tab
-local AutoTab = Window:CreateTab("🤖 Auto Farm", nil)
-AutoTab:CreateSection("Blox Fruits Farming")
+-- Blox Fruits Tab (Auto Farm + Kill Aura)
+local BloxFarmTab = Window:CreateTab("🤖 Blox Fruits", nil)
+BloxFarmTab:CreateSection("Auto Farm & Kill Aura")
 
-local autoFarmEnabled=false
-AutoTab:CreateToggle({Name="Enable Auto Farm", CurrentValue=false, Callback=function(value)
-    autoFarmEnabled=value
-    if autoFarmEnabled then
-        spawn(function()
-            while autoFarmEnabled and task.wait(0.5) do
-                local player=game.Players.LocalPlayer
-                local char=player.Character
-                if not char or not char:FindFirstChild("HumanoidRootPart") then continue end
-                local targetEnemy
-                local closestDist=math.huge
-                for _,npc in pairs(workspace.Enemies:GetChildren()) do
-                    if npc:FindFirstChild("HumanoidRootPart") and npc:FindFirstChildOfClass("Humanoid") then
-                        local dist=(npc.HumanoidRootPart.Position-char.HumanoidRootPart.Position).Magnitude
-                        if dist<closestDist and npc.Humanoid.Health>0 then
-                            closestDist=dist
-                            targetEnemy=npc
+local autoFarmEnabled = false
+local killAuraRadius = 20
+
+BloxFarmTab:CreateToggle({
+    Name = "Enable Auto Farm + Kill Aura",
+    CurrentValue = false,
+    Callback = function(value)
+        autoFarmEnabled = value
+        if autoFarmEnabled then
+            spawn(function()
+                while autoFarmEnabled and task.wait(0.3) do
+                    local player = game.Players.LocalPlayer
+                    local char = player.Character
+                    if not char or not char:FindFirstChild("HumanoidRootPart") then continue end
+
+                    local enemiesFolder = workspace:FindFirstChild("Enemies")
+                    if not enemiesFolder then continue end
+
+                    for _, npc in pairs(enemiesFolder:GetChildren()) do
+                        if npc:FindFirstChild("Humanoid") and npc:FindFirstChild("HumanoidRootPart") and npc.Humanoid.Health > 0 then
+                            local distance = (npc.HumanoidRootPart.Position - char.HumanoidRootPart.Position).Magnitude
+                            if distance <= killAuraRadius then
+                                char.HumanoidRootPart.CFrame = npc.HumanoidRootPart.CFrame + Vector3.new(0,3,0)
+                                pcall(function()
+                                    game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("RegisterAttack")
+                                end)
+                            end
                         end
                     end
                 end
-                if targetEnemy and targetEnemy:FindFirstChild("HumanoidRootPart") then
-                    char.HumanoidRootPart.CFrame=targetEnemy.HumanoidRootPart.CFrame*CFrame.new(0,0,-3)
-                    pcall(function()
-                        game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("Melee")
-                    end)
-                end
-            end
-        end)
+            end)
+        end
     end
-end})
+})
 
-AutoTab:CreateButton({Name="Stop Auto Farm", Callback=function() autoFarmEnabled=false end})
-AutoTab:CreateLabel({Name="Note: Works best with Equipping Weapons"})
+BloxFarmTab:CreateButton({
+    Name = "Stop Auto Farm",
+    Callback = function()
+        autoFarmEnabled = false
+    end
+})
+
+BloxFarmTab:CreateLabel({
+    Name = "Kill Aura radius: 20 studs. Teleports on top of Blox Fruits enemies automatically."
+})
