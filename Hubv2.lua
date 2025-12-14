@@ -7,11 +7,9 @@ local Window = Rayfield:CreateWindow({
     ToggleUIKeybind = "K",
 })
 
--- Main Tab
 local MainTab = Window:CreateTab("🏠 Main", nil)
 MainTab:CreateSection("Player")
 
--- WalkSpeed
 MainTab:CreateSlider({
     Name = "Walk Speed",
     Range = {16, 300},
@@ -26,7 +24,6 @@ MainTab:CreateSlider({
     end
 })
 
--- Infinite Jump
 local infJumpEnabled = false
 MainTab:CreateToggle({
     Name = "Infinite Jump",
@@ -44,7 +41,6 @@ game:GetService("UserInputService").JumpRequest:Connect(function()
     end
 end)
 
--- Clone Button
 MainTab:CreateButton({
     Name = "Clone Me (Original Look)",
     Callback = function()
@@ -71,7 +67,6 @@ MainTab:CreateButton({
     end
 })
 
--- Fly Tab
 local FlyTab = Window:CreateTab("🕊 Fly", nil)
 FlyTab:CreateSection("Fly Controls")
 local Players = game:GetService("Players")
@@ -149,11 +144,9 @@ UIS.InputEnded:Connect(function(i)
     if i.KeyCode==Enum.KeyCode.Q then move.q=0 end
 end)
 
--- Fun Tab (Rayfield)
 local FunTab = Window:CreateTab("🎉 Fun", nil)
 FunTab:CreateSection("Fun Scripts")
 
--- WalkSpeed Boost
 FunTab:CreateButton({
     Name = "Boost WalkSpeed +50",
     Callback = function()
@@ -161,15 +154,10 @@ FunTab:CreateButton({
         if char and char:FindFirstChild("Humanoid") then
             char.Humanoid.WalkSpeed = char.Humanoid.WalkSpeed + 50
         end
-        Rayfield:Notify({
-            Title = "Fun",
-            Content = "WalkSpeed boosted!",
-            Duration = 3
-        })
+        Rayfield:Notify({Title="Fun", Content="WalkSpeed boosted!", Duration=3})
     end
 })
 
--- Jump Boost
 FunTab:CreateButton({
     Name = "Jump Boost +50",
     Callback = function()
@@ -177,22 +165,15 @@ FunTab:CreateButton({
         if char and char:FindFirstChild("Humanoid") then
             char.Humanoid.JumpPower = char.Humanoid.JumpPower + 50
         end
-        Rayfield:Notify({
-            Title = "Fun",
-            Content = "Jump Power increased!",
-            Duration = 3
-        })
+        Rayfield:Notify({Title="Fun", Content="Jump Power increased!", Duration=3})
     end
 })
 
--- Infinite Jump (Fun)
 local funInfJump = false
 FunTab:CreateToggle({
     Name = "Infinite Jump",
     CurrentValue = false,
-    Callback = function(Value)
-        funInfJump = Value
-    end
+    Callback = function(Value) funInfJump = Value end
 })
 game:GetService("UserInputService").JumpRequest:Connect(function()
     if funInfJump then
@@ -203,23 +184,17 @@ game:GetService("UserInputService").JumpRequest:Connect(function()
     end
 end)
 
--- Chat Spam
 FunTab:CreateButton({
     Name = "Chat Spam Hello",
     Callback = function()
-        for i = 1,5 do
-            game:GetService("ReplicatedStorage").DefaultChatSystemChatEvents.SayMessageRequest:FireServer("Hello!", "All")
+        for i=1,5 do
+            game:GetService("ReplicatedStorage").DefaultChatSystemChatEvents.SayMessageRequest:FireServer("Hello!","All")
             task.wait(0.5)
         end
-        Rayfield:Notify({
-            Title = "Fun",
-            Content = "Chat spam complete!",
-            Duration = 3
-        })
+        Rayfield:Notify({Title="Fun", Content="Chat spam complete!", Duration=3})
     end
 })
 
--- Teleport to Random Player
 FunTab:CreateButton({
     Name = "Teleport to Random Player",
     Callback = function()
@@ -229,20 +204,15 @@ FunTab:CreateButton({
         if char and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
             char:SetPrimaryPartCFrame(target.Character.HumanoidRootPart.CFrame + Vector3.new(0,5,0))
         end
-        Rayfield:Notify({
-            Title = "Fun",
-            Content = "Teleported to "..target.Name,
-            Duration = 3
-        })
+        Rayfield:Notify({Title="Fun", Content="Teleported to "..target.Name, Duration=3})
     end
 })
 
--- ESP (Highlight Players)
 FunTab:CreateButton({
     Name = "ESP Players",
     Callback = function()
         for i,v in pairs(game.Players:GetPlayers()) do
-            if v ~= game.Players.LocalPlayer and v.Character and not v.Character:FindFirstChildWhichIsA("Highlight") then
+            if v~=game.Players.LocalPlayer and v.Character and not v.Character:FindFirstChildWhichIsA("Highlight") then
                 local highlight = Instance.new("Highlight")
                 highlight.Adornee = v.Character
                 highlight.FillColor = Color3.fromRGB(255,0,0)
@@ -250,10 +220,26 @@ FunTab:CreateButton({
                 highlight.Parent = v.Character
             end
         end
-        Rayfield:Notify({
-            Title = "Fun",
-            Content = "ESP activated!",
-            Duration = 3
-        })
+        Rayfield:Notify({Title="Fun", Content="ESP activated!", Duration=3})
+    end
+})
+
+FunTab:CreateInput({
+    Name = "Type Player Name",
+    PlaceholderText = "Enter player's name...",
+    RemoveTextAfterFocusLost = true,
+    Callback = function(playerName)
+        if playerName and playerName~="" then
+            local target = game.Players:FindFirstChild(playerName)
+            local char = game.Players.LocalPlayer.Character
+            if target and target.Character and char and char:FindFirstChild("HumanoidRootPart") then
+                char:SetPrimaryPartCFrame(target.Character.HumanoidRootPart.CFrame + Vector3.new(0,5,0))
+                Rayfield:Notify({Title="Teleported", Content="Teleported to "..target.Name, Duration=4})
+            else
+                Rayfield:Notify({Title="Error", Content="Player not found or invalid", Duration=4})
+            end
+        else
+            Rayfield:Notify({Title="Cancelled", Content="No name entered", Duration=3})
+        end
     end
 })
