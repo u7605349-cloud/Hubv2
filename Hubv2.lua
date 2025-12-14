@@ -1,171 +1,140 @@
 local Rayfield = loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
-
 local Window = Rayfield:CreateWindow({
-    Name = "Raymond hub",
-    Icon = 0,
-    LoadingTitle = "Rayfield Interface Suite",
+    Name = "Raymond Hub",
+    LoadingTitle = "Rayfield UI",
     LoadingSubtitle = "by raymond",
-    ShowText = "Rayfield",
     Theme = "Default",
     ToggleUIKeybind = "K",
-
-    ConfigurationSaving = {
-        Enabled = true,
-        FolderName = nil,
-        FileName = "Big Hub"
-    },
-
-    KeySystem = true,
-    KeySettings = {
-        Title = "key system",
-        Subtitle = "KeyCode",
-        Note = "No method of obtaining the key is provided",
-        FileName = "raymond1",
-        SaveKey = true,
-        GrabKeyFromSite = true,
-        Key = {"https://pastebin.com/raw/e22b7rVf"}
-    }
 })
-
-local MainTab = Window:CreateTab("🏠", nil)
-MainTab:CreateSection("main")
-
-Rayfield:Notify({
-    Title = "u activated script",
-    Content = "best ui",
-    Duration = 6.5
-})
-
-MainTab:CreateButton({
-    Name = "Infinite Jump",
-    Callback = function()
-        local u = game:GetService("UserInputService")
-        local p = game.Players.LocalPlayer
-        u.JumpRequest:Connect(function()
-            if p.Character and p.Character:FindFirstChildOfClass("Humanoid") then
-                p.Character:FindFirstChildOfClass("Humanoid"):ChangeState(Enum.HumanoidStateType.Jumping)
-            end
-        end)
-    end
-})
-
+local MainTab = Window:CreateTab("🏠 Main", nil)
+MainTab:CreateSection("Player")
 MainTab:CreateSlider({
-    Name = "walk speed",
-    Range = {0,300},
+    Name = "Walk Speed",
+    Range = {16, 300},
     Increment = 1,
-    Suffix = "speed",
     CurrentValue = 16,
+    Suffix = "Speed",
     Callback = function(Value)
-        game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = Value
-    end
-})
-
-local FlyTab = Window:CreateTab("fly", nil)
-FlyTab:CreateSection("fly script")
-
-FlyTab:CreateButton({
-    Name = "fly (press F)",
-    Callback = function()
-        local p = game.Players.LocalPlayer
-        local u = game:GetService("UserInputService")
-        local r = game:GetService("RunService")
-
-        local flying = false
-        local bv, bg, conn
-        local speed = 50
-        local dir = {w=0,a=0,s=0,d=0,q=0,e=0}
-
-        local function toggle()
-            local c = p.Character
-            if not c then return end
-            local hrp = c:FindFirstChild("HumanoidRootPart")
-            if not hrp then return end
-
-            flying = not flying
-
-            if flying then
-                bv = Instance.new("BodyVelocity", hrp)
-                bv.MaxForce = Vector3.new(1,1,1) * 1e5
-                bg = Instance.new("BodyGyro", hrp)
-                bg.MaxTorque = Vector3.new(1,1,1) * 1e5
-                bg.P = 1e4
-
-                conn = r.RenderStepped:Connect(function()
-                    local cam = workspace.CurrentCamera
-                    local move =
-                        cam.CFrame.LookVector * (dir.w - dir.s) +
-                        cam.CFrame.RightVector * (dir.d - dir.a) +
-                        Vector3.new(0,1,0) * (dir.e - dir.q)
-
-                    if move.Magnitude > 0 then
-                        bv.Velocity = move.Unit * speed
-                    else
-                        bv.Velocity = Vector3.zero
-                    end
-
-                    bg.CFrame = cam.CFrame
-                end)
-            else
-                if conn then conn:Disconnect() end
-                if bv then bv:Destroy() end
-                if bg then bg:Destroy() end
-            end
+        local char = game.Players.LocalPlayer.Character
+        if char and char:FindFirstChild("Humanoid") then
+            char.Humanoid.WalkSpeed = Value
         end
-
-        u.InputBegan:Connect(function(i,g)
-            if g then return end
-            if i.KeyCode == Enum.KeyCode.F then toggle() end
-            if i.KeyCode == Enum.KeyCode.W then dir.w=1 end
-            if i.KeyCode == Enum.KeyCode.A then dir.a=1 end
-            if i.KeyCode == Enum.KeyCode.S then dir.s=1 end
-            if i.KeyCode == Enum.KeyCode.D then dir.d=1 end
-            if i.KeyCode == Enum.KeyCode.E then dir.e=1 end
-            if i.KeyCode == Enum.KeyCode.Q then dir.q=1 end
-        end)
-
-        u.InputEnded:Connect(function(i)
-            if i.KeyCode == Enum.KeyCode.W then dir.w=0 end
-            if i.KeyCode == Enum.KeyCode.A then dir.a=0 end
-            if i.KeyCode == Enum.KeyCode.S then dir.s=0 end
-            if i.KeyCode == Enum.KeyCode.D then dir.d=0 end
-            if i.KeyCode == Enum.KeyCode.E then dir.e=0 end
-            if i.KeyCode == Enum.KeyCode.Q then dir.q=0 end
-        end)
     end
 })
-
-local Players = game:GetService("Players")
-local Player = Players.LocalPlayer
-
-local function Char()
-    return Player.Character or Player.CharacterAdded:Wait()
-end
-
-local GodTab = Window:CreateTab("🛡 Godmode", nil)
-GodTab:CreateSection("Protection")
-
-local god = false
-GodTab:CreateToggle({
-    Name = "Godmode",
+local infJumpEnabled = false
+MainTab:CreateToggle({
+    Name = "Infinite Jump",
     CurrentValue = false,
-    Callback = function(v)
-        god = v
-
-        local function apply()
-            if not god then return end
-            local h = Char():WaitForChild("Humanoid")
-            h.MaxHealth = math.huge
-            h.Health = math.huge
-            h:SetStateEnabled(Enum.HumanoidStateType.Dead, false)
-
-            h:GetPropertyChangedSignal("Health"):Connect(function()
-                if god and h.Health < h.MaxHealth then
-                    h.Health = h.MaxHealth
-                end
-            end)
-        end
-
-        apply()
-        Player.CharacterAdded:Connect(apply)
+    Callback = function(Value)
+        infJumpEnabled = Value
     end
 })
+game:GetService("UserInputService").JumpRequest:Connect(function()
+    if infJumpEnabled then
+        local char = game.Players.LocalPlayer.Character
+        if char and char:FindFirstChild("Humanoid") then
+            char.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+        end
+    end
+end)
+MainTab:CreateButton({
+    Name = "Clone Me (Original Look)",
+    Callback = function()
+        local player = game.Players.LocalPlayer
+        local char = player.Character
+        if not char then return end
+        local clone = char:Clone()
+        clone.Name = player.Name .. "_Clone"
+        local hrp = char:FindFirstChild("HumanoidRootPart")
+        local cloneHrp = clone:FindFirstChild("HumanoidRootPart")
+        if hrp and cloneHrp then
+            cloneHrp.CFrame = hrp.CFrame * CFrame.new(5, 0, 0)
+        end
+        clone.Parent = workspace
+        local humanoid = clone:FindFirstChildOfClass("Humanoid")
+        if humanoid and not humanoid:FindFirstChildOfClass("Animator") then
+            local animator = Instance.new("Animator")
+            animator.Parent = humanoid
+        end
+        Rayfield:Notify({
+            Title = "Clone Created",
+            Content = "Your clone looks exactly like you",
+            Duration = 4
+        })
+    end
+})
+local FlyTab = Window:CreateTab("🕊 Fly", nil)
+FlyTab:CreateSection("Fly Controls")
+local Players = game:GetService("Players")
+local UIS = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local player = Players.LocalPlayer
+local flying = false
+local flySpeed = 60
+local bv, bg, flyConn
+local move = {w=0,a=0,s=0,d=0,q=0,e=0}
+local function toggleFly(state)
+    flying = state
+    local char = player.Character
+    if not char then return end
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    if not hrp then return end
+    if flying then
+        bv = Instance.new("BodyVelocity", hrp)
+        bv.MaxForce = Vector3.new(1e5,1e5,1e5)
+        bg = Instance.new("BodyGyro", hrp)
+        bg.MaxTorque = Vector3.new(1e5,1e5,1e5)
+        bg.P = 1e4
+        flyConn = RunService.RenderStepped:Connect(function()
+            local cam = workspace.CurrentCamera
+            local dir =
+                (cam.CFrame.LookVector * (move.w - move.s)) +
+                (cam.CFrame.RightVector * (move.d - move.a)) +
+                (Vector3.new(0,1,0) * (move.e - move.q))
+            if dir.Magnitude > 0 then
+                bv.Velocity = dir.Unit * flySpeed
+            else
+                bv.Velocity = Vector3.zero
+            end
+            bg.CFrame = cam.CFrame
+        end)
+    else
+        if flyConn then flyConn:Disconnect() end
+        if bv then bv:Destroy() end
+        if bg then bg:Destroy() end
+    end
+end
+FlyTab:CreateToggle({
+    Name = "Enable Fly",
+    CurrentValue = false,
+    Callback = function(Value)
+        toggleFly(Value)
+    end
+})
+FlyTab:CreateSlider({
+    Name = "Fly Speed",
+    Range = {10, 200},
+    Increment = 5,
+    CurrentValue = 60,
+    Suffix = "Speed",
+    Callback = function(Value)
+        flySpeed = Value
+    end
+})
+UIS.InputBegan:Connect(function(i,g)
+    if g then return end
+    if i.KeyCode == Enum.KeyCode.W then move.w=1 end
+    if i.KeyCode == Enum.KeyCode.A then move.a=1 end
+    if i.KeyCode == Enum.KeyCode.S then move.s=1 end
+    if i.KeyCode == Enum.KeyCode.D then move.d=1 end
+    if i.KeyCode == Enum.KeyCode.E then move.e=1 end
+    if i.KeyCode == Enum.KeyCode.Q then move.q=1 end
+end)
+UIS.InputEnded:Connect(function(i)
+    if i.KeyCode == Enum.KeyCode.W then move.w=0 end
+    if i.KeyCode == Enum.KeyCode.A then move.a=0 end
+    if i.KeyCode == Enum.KeyCode.S then move.s=0 end
+    if i.KeyCode == Enum.KeyCode.D then move.d=0 end
+    if i.KeyCode == Enum.KeyCode.E then move.e=0 end
+    if i.KeyCode == Enum.KeyCode.Q then move.q=0 end
+end)
