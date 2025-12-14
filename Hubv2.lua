@@ -6,8 +6,12 @@ local Window = Rayfield:CreateWindow({
     Theme = "Default",
     ToggleUIKeybind = "K",
 })
+
+-- Main Tab
 local MainTab = Window:CreateTab("🏠 Main", nil)
 MainTab:CreateSection("Player")
+
+-- WalkSpeed
 MainTab:CreateSlider({
     Name = "Walk Speed",
     Range = {16, 300},
@@ -21,6 +25,8 @@ MainTab:CreateSlider({
         end
     end
 })
+
+-- Infinite Jump
 local infJumpEnabled = false
 MainTab:CreateToggle({
     Name = "Infinite Jump",
@@ -37,6 +43,8 @@ game:GetService("UserInputService").JumpRequest:Connect(function()
         end
     end
 end)
+
+-- Clone
 MainTab:CreateButton({
     Name = "Clone Me (Original Look)",
     Callback = function()
@@ -48,13 +56,12 @@ MainTab:CreateButton({
         local hrp = char:FindFirstChild("HumanoidRootPart")
         local cloneHrp = clone:FindFirstChild("HumanoidRootPart")
         if hrp and cloneHrp then
-            cloneHrp.CFrame = hrp.CFrame * CFrame.new(5, 0, 0)
+            cloneHrp.CFrame = hrp.CFrame * CFrame.new(5,0,0)
         end
         clone.Parent = workspace
         local humanoid = clone:FindFirstChildOfClass("Humanoid")
         if humanoid and not humanoid:FindFirstChildOfClass("Animator") then
-            local animator = Instance.new("Animator")
-            animator.Parent = humanoid
+            Instance.new("Animator", humanoid)
         end
         Rayfield:Notify({
             Title = "Clone Created",
@@ -63,6 +70,8 @@ MainTab:CreateButton({
         })
     end
 })
+
+-- Fly Tab
 local FlyTab = Window:CreateTab("🕊 Fly", nil)
 FlyTab:CreateSection("Fly Controls")
 local Players = game:GetService("Players")
@@ -73,6 +82,7 @@ local flying = false
 local flySpeed = 60
 local bv, bg, flyConn
 local move = {w=0,a=0,s=0,d=0,q=0,e=0}
+
 local function toggleFly(state)
     flying = state
     local char = player.Character
@@ -87,12 +97,9 @@ local function toggleFly(state)
         bg.P = 1e4
         flyConn = RunService.RenderStepped:Connect(function()
             local cam = workspace.CurrentCamera
-            local dir =
-                (cam.CFrame.LookVector * (move.w - move.s)) +
-                (cam.CFrame.RightVector * (move.d - move.a)) +
-                (Vector3.new(0,1,0) * (move.e - move.q))
-            if dir.Magnitude > 0 then
-                bv.Velocity = dir.Unit * flySpeed
+            local dir = (cam.CFrame.LookVector*(move.w-move.s) + cam.CFrame.RightVector*(move.d-move.a) + Vector3.new(0,1,0)*(move.e-move.q))
+            if dir.Magnitude>0 then
+                bv.Velocity = dir.Unit*flySpeed
             else
                 bv.Velocity = Vector3.zero
             end
@@ -104,6 +111,7 @@ local function toggleFly(state)
         if bg then bg:Destroy() end
     end
 end
+
 FlyTab:CreateToggle({
     Name = "Enable Fly",
     CurrentValue = false,
@@ -111,9 +119,10 @@ FlyTab:CreateToggle({
         toggleFly(Value)
     end
 })
+
 FlyTab:CreateSlider({
     Name = "Fly Speed",
-    Range = {10, 200},
+    Range = {10,200},
     Increment = 5,
     CurrentValue = 60,
     Suffix = "Speed",
@@ -121,20 +130,21 @@ FlyTab:CreateSlider({
         flySpeed = Value
     end
 })
+
 UIS.InputBegan:Connect(function(i,g)
     if g then return end
-    if i.KeyCode == Enum.KeyCode.W then move.w=1 end
-    if i.KeyCode == Enum.KeyCode.A then move.a=1 end
-    if i.KeyCode == Enum.KeyCode.S then move.s=1 end
-    if i.KeyCode == Enum.KeyCode.D then move.d=1 end
-    if i.KeyCode == Enum.KeyCode.E then move.e=1 end
-    if i.KeyCode == Enum.KeyCode.Q then move.q=1 end
+    if i.KeyCode==Enum.KeyCode.W then move.w=1 end
+    if i.KeyCode==Enum.KeyCode.A then move.a=1 end
+    if i.KeyCode==Enum.KeyCode.S then move.s=1 end
+    if i.KeyCode==Enum.KeyCode.D then move.d=1 end
+    if i.KeyCode==Enum.KeyCode.E then move.e=1 end
+    if i.KeyCode==Enum.KeyCode.Q then move.q=1 end
 end)
 UIS.InputEnded:Connect(function(i)
-    if i.KeyCode == Enum.KeyCode.W then move.w=0 end
-    if i.KeyCode == Enum.KeyCode.A then move.a=0 end
-    if i.KeyCode == Enum.KeyCode.S then move.s=0 end
-    if i.KeyCode == Enum.KeyCode.D then move.d=0 end
-    if i.KeyCode == Enum.KeyCode.E then move.e=0 end
-    if i.KeyCode == Enum.KeyCode.Q then move.q=0 end
+    if i.KeyCode==Enum.KeyCode.W then move.w=0 end
+    if i.KeyCode==Enum.KeyCode.A then move.a=0 end
+    if i.KeyCode==Enum.KeyCode.S then move.s=0 end
+    if i.KeyCode==Enum.KeyCode.D then move.d=0 end
+    if i.KeyCode==Enum.KeyCode.E then move.e=0 end
+    if i.KeyCode==Enum.KeyCode.Q then move.q=0 end
 end)
