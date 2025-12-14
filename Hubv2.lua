@@ -7,12 +7,6 @@ local Window = Rayfield:CreateWindow({
     ToggleUIKeybind = "K",
 })
 
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
-local UIS = game:GetService("UserInputService")
-local RunService = game:GetService("RunService")
-
--- MAIN TAB
 local MainTab = Window:CreateTab("🏠 Main", nil)
 MainTab:CreateSection("Player")
 
@@ -23,7 +17,7 @@ MainTab:CreateSlider({
     CurrentValue = 16,
     Suffix = "Speed",
     Callback = function(Value)
-        local char = LocalPlayer.Character
+        local char = game.Players.LocalPlayer.Character
         if char and char:FindFirstChild("Humanoid") then
             char.Humanoid.WalkSpeed = Value
         end
@@ -38,9 +32,9 @@ MainTab:CreateToggle({
         infJumpEnabled = Value
     end
 })
-UIS.JumpRequest:Connect(function()
+game:GetService("UserInputService").JumpRequest:Connect(function()
     if infJumpEnabled then
-        local char = LocalPlayer.Character
+        local char = game.Players.LocalPlayer.Character
         if char and char:FindFirstChild("Humanoid") then
             char.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
         end
@@ -50,10 +44,11 @@ end)
 MainTab:CreateButton({
     Name = "Clone Me (Original Look)",
     Callback = function()
-        local char = LocalPlayer.Character
+        local player = game.Players.LocalPlayer
+        local char = player.Character
         if not char then return end
         local clone = char:Clone()
-        clone.Name = LocalPlayer.Name.."_Clone"
+        clone.Name = player.Name .. "_Clone"
         local hrp = char:FindFirstChild("HumanoidRootPart")
         local cloneHrp = clone:FindFirstChild("HumanoidRootPart")
         if hrp and cloneHrp then
@@ -68,62 +63,39 @@ MainTab:CreateButton({
     end
 })
 
--- FLY TAB
 local FlyTab = Window:CreateTab("🕊 Fly", nil)
 FlyTab:CreateSection("Fly Controls")
 
-local savedSpeed = 50
 local flying = false
-local flySpeed = savedSpeed
-local bodyVelocity
-local bodyGyro
-local move = {w=0, a=0, s=0, d=0, q=0, e=0}
+local flySpeed = 50
+local player = game.Players.LocalPlayer
+local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+local bv, bg = nil, nil
+local RunService = game:GetService("RunService")
+local Camera = workspace.CurrentCamera
 
-local function setupFly()
-    local char = LocalPlayer.Character
+local function startFly()
+    local char = player.Character
     if not char then return end
-    local HRP = char:WaitForChild("HumanoidRootPart")
+    hrp = char:WaitForChild("HumanoidRootPart")
     local humanoid = char:WaitForChild("Humanoid")
-    local Camera = workspace.CurrentCamera
-
-    bodyVelocity = Instance.new("BodyVelocity")
-    bodyVelocity.MaxForce = Vector3.new(1e5,1e5,1e5)
-
-    bodyGyro = Instance.new("BodyGyro")
-    bodyGyro.MaxTorque = Vector3.new(1e5,1e5,1e5)
-
-    RunService:BindToRenderStep("FlyMovement", Enum.RenderPriority.Camera.Value, function()
-        if not flying then return end
-        local dir = Vector3.zero
-        local camCF = Camera.CFrame
-        if move.w ~= 0 then dir += camCF.LookVector * move.w end
-        if move.s ~= 0 then dir -= camCF.LookVector * move.s end
-        if move.a ~= 0 then dir -= camCF.RightVector * move.a end
-        if move.d ~= 0 then dir += camCF.RightVector * move.d end
-        if move.e ~= 0 then dir += Vector3.yAxis * move.e end
-        if move.q ~= 0 then dir -= Vector3.yAxis * move.q end
-        if dir.Magnitude > 0 then dir = dir.Unit end
-        bodyVelocity.Velocity = dir * flySpeed
-        bodyGyro.CFrame = camCF
-    end)
-end
-
-local function startFlying()
-    local char = LocalPlayer.Character
-    if not char then return end
-    local HRP = char:WaitForChild("HumanoidRootPart")
-    local humanoid = char:WaitForChild("Humanoid")
-    bodyVelocity.Parent = HRP
-    bodyGyro.Parent = HRP
+    bv = Instance.new("BodyVelocity")
+    bv.MaxForce = Vector3.new(1e5,1e5,1e5)
+    bv.Velocity = Vector3.zero
+    bv.Parent = hrp
+    bg = Instance.new("BodyGyro")
+    bg.MaxTorque = Vector3.new(1e5,1e5,1e5)
+    bg.CFrame = hrp.CFrame
+    bg.Parent = hrp
     humanoid.PlatformStand = true
     flying = true
 end
 
-local function stopFlying()
+local function stopFly()
     flying = false
-    if bodyVelocity then bodyVelocity.Parent = nil end
-    if bodyGyro then bodyGyro.Parent = nil end
-    local char = LocalPlayer.Character
+    if bv then bv:Destroy() end
+    if bg then bg:Destroy() end
+    local char = player.Character
     if char and char:FindFirstChild("Humanoid") then
         char.Humanoid.PlatformStand = false
     end
@@ -132,70 +104,59 @@ end
 FlyTab:CreateToggle({
     Name = "Enable Fly",
     CurrentValue = false,
-    Callback = function(Value)
-        flying = Value
-        if Value then
-            setupFly()
-            startFlying()
+    Callback = function(val)
+        if val then
+            startFly()
         else
-            stopFlying()
+            stopFly()
         end
     end
 })
 
 FlyTab:CreateSlider({
     Name = "Fly Speed",
-    Range = {10, 200},
+    Range = {10,300},
     Increment = 5,
-    CurrentValue = savedSpeed,
+    CurrentValue = flySpeed,
     Suffix = "Speed",
-    Callback = function(Value)
-        flySpeed = Value
-        savedSpeed = Value
+    Callback = function(val)
+        flySpeed = val
     end
 })
 
-UIS.InputBegan:Connect(function(input, gpe)
-    if gpe then return end
-    if input.KeyCode == Enum.KeyCode.W then move.w = 1 end
-    if input.KeyCode == Enum.KeyCode.S then move.s = 1 end
-    if input.KeyCode == Enum.KeyCode.A then move.a = 1 end
-    if input.KeyCode == Enum.KeyCode.D then move.d = 1 end
-    if input.KeyCode == Enum.KeyCode.E then move.e = 1 end
-    if input.KeyCode == Enum.KeyCode.Q then move.q = 1 end
+RunService.RenderStepped:Connect(function()
+    if flying and hrp and bv and bg and player.Character then
+        local humanoid = player.Character:FindFirstChild("Humanoid")
+        if humanoid then
+            bv.Velocity = Camera.CFrame:VectorToWorldSpace(humanoid.MoveDirection) * flySpeed
+            bg.CFrame = Camera.CFrame
+        end
+    end
 end)
 
-UIS.InputEnded:Connect(function(input)
-    if input.KeyCode == Enum.KeyCode.W then move.w = 0 end
-    if input.KeyCode == Enum.KeyCode.S then move.s = 0 end
-    if input.KeyCode == Enum.KeyCode.A then move.a = 0 end
-    if input.KeyCode == Enum.KeyCode.D then move.d = 0 end
-    if input.KeyCode == Enum.KeyCode.E then move.e = 0 end
-    if input.KeyCode == Enum.KeyCode.Q then move.q = 0 end
+player.CharacterAdded:Connect(function()
+    wait(1)
+    if flying then
+        startFly()
+    end
 end)
 
-LocalPlayer.CharacterAdded:Connect(function()
-    flying = false
-    setupFly()
-end)
-
--- BLOX FRUITS TAB
-local BloxFruitsTab = Window:CreateTab("🍉 Blox Fruits", nil)
-BloxFruitsTab:CreateSection("Blox Fruits Scripts")
+local BloxTab = Window:CreateTab("🍌 Blox Fruits", nil)
+BloxTab:CreateSection("Auto Farm & Utilities")
 
 local killAuraEnabled = false
-BloxFruitsTab:CreateToggle({
+BloxTab:CreateToggle({
     Name = "Kill Aura",
     CurrentValue = false,
-    Callback = function(Value)
-        killAuraEnabled = Value
+    Callback = function(val)
+        killAuraEnabled = val
         spawn(function()
             while killAuraEnabled do
-                for _, npc in pairs(workspace.Enemies:GetChildren()) do
-                    if npc:FindFirstChild("HumanoidRootPart") and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-                        LocalPlayer.Character.HumanoidRootPart.CFrame = npc.HumanoidRootPart.CFrame + Vector3.new(0,3,0)
-                        if npc:FindFirstChildOfClass("Humanoid") then
-                            npc:FindFirstChildOfClass("Humanoid").Health = 0
+                local char = player.Character
+                if char and char:FindFirstChild("HumanoidRootPart") then
+                    for i,v in pairs(game.Workspace.Enemies:GetChildren()) do
+                        if v:FindFirstChild("HumanoidRootPart") and (v.HumanoidRootPart.Position - char.HumanoidRootPart.Position).Magnitude < 15 then
+                            v.Humanoid.Health = 0
                         end
                     end
                 end
@@ -204,57 +165,3 @@ BloxFruitsTab:CreateToggle({
         end)
     end
 })
-
-local hideOtherPlayersEnabled = false
-local function hideCharacterForOthers()
-    for _, player in pairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer and player.Character then
-            for _, part in pairs(player.Character:GetDescendants()) do
-                if part:IsA("BasePart") or part:IsA("MeshPart") then
-                    part.Transparency = 1
-                    local decal = part:FindFirstChildOfClass("Decal")
-                    if decal then decal.Transparency = 1 end
-                elseif part:IsA("BillboardGui") or part:IsA("SurfaceGui") then
-                    part.Enabled = false
-                end
-            end
-        end
-    end
-end
-
-local function showCharacterForOthers()
-    for _, player in pairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer and player.Character then
-            for _, part in pairs(player.Character:GetDescendants()) do
-                if part:IsA("BasePart") or part:IsA("MeshPart") then
-                    part.Transparency = 0
-                    local decal = part:FindFirstChildOfClass("Decal")
-                    if decal then decal.Transparency = 0 end
-                elseif part:IsA("BillboardGui") or part:IsA("SurfaceGui") then
-                    part.Enabled = true
-                end
-            end
-        end
-    end
-end
-
-BloxFruitsTab:CreateToggle({
-    Name = "Hide Other Players",
-    CurrentValue = false,
-    Callback = function(Value)
-        hideOtherPlayersEnabled = Value
-        if Value then
-            hideCharacterForOthers()
-        else
-            showCharacterForOthers()
-        end
-    end
-})
-
-Players.PlayerAdded:Connect(function(plr)
-    plr.CharacterAdded:Connect(function()
-        if hideOtherPlayersEnabled then
-            hideCharacterForOthers()
-        end
-    end)
-end)
