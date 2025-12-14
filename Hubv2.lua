@@ -44,7 +44,7 @@ game:GetService("UserInputService").JumpRequest:Connect(function()
     end
 end)
 
--- Clone
+-- Clone Button
 MainTab:CreateButton({
     Name = "Clone Me (Original Look)",
     Callback = function()
@@ -148,3 +148,112 @@ UIS.InputEnded:Connect(function(i)
     if i.KeyCode==Enum.KeyCode.E then move.e=0 end
     if i.KeyCode==Enum.KeyCode.Q then move.q=0 end
 end)
+
+-- Fun Tab (Rayfield)
+local FunTab = Window:CreateTab("🎉 Fun", nil)
+FunTab:CreateSection("Fun Scripts")
+
+-- WalkSpeed Boost
+FunTab:CreateButton({
+    Name = "Boost WalkSpeed +50",
+    Callback = function()
+        local char = game.Players.LocalPlayer.Character
+        if char and char:FindFirstChild("Humanoid") then
+            char.Humanoid.WalkSpeed = char.Humanoid.WalkSpeed + 50
+        end
+        Rayfield:Notify({
+            Title = "Fun",
+            Content = "WalkSpeed boosted!",
+            Duration = 3
+        })
+    end
+})
+
+-- Jump Boost
+FunTab:CreateButton({
+    Name = "Jump Boost +50",
+    Callback = function()
+        local char = game.Players.LocalPlayer.Character
+        if char and char:FindFirstChild("Humanoid") then
+            char.Humanoid.JumpPower = char.Humanoid.JumpPower + 50
+        end
+        Rayfield:Notify({
+            Title = "Fun",
+            Content = "Jump Power increased!",
+            Duration = 3
+        })
+    end
+})
+
+-- Infinite Jump (Fun)
+local funInfJump = false
+FunTab:CreateToggle({
+    Name = "Infinite Jump",
+    CurrentValue = false,
+    Callback = function(Value)
+        funInfJump = Value
+    end
+})
+game:GetService("UserInputService").JumpRequest:Connect(function()
+    if funInfJump then
+        local char = game.Players.LocalPlayer.Character
+        if char and char:FindFirstChild("Humanoid") then
+            char.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+        end
+    end
+end)
+
+-- Chat Spam
+FunTab:CreateButton({
+    Name = "Chat Spam Hello",
+    Callback = function()
+        for i = 1,5 do
+            game:GetService("ReplicatedStorage").DefaultChatSystemChatEvents.SayMessageRequest:FireServer("Hello!", "All")
+            task.wait(0.5)
+        end
+        Rayfield:Notify({
+            Title = "Fun",
+            Content = "Chat spam complete!",
+            Duration = 3
+        })
+    end
+})
+
+-- Teleport to Random Player
+FunTab:CreateButton({
+    Name = "Teleport to Random Player",
+    Callback = function()
+        local players = game.Players:GetPlayers()
+        local target = players[math.random(1,#players)]
+        local char = game.Players.LocalPlayer.Character
+        if char and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
+            char:SetPrimaryPartCFrame(target.Character.HumanoidRootPart.CFrame + Vector3.new(0,5,0))
+        end
+        Rayfield:Notify({
+            Title = "Fun",
+            Content = "Teleported to "..target.Name,
+            Duration = 3
+        })
+    end
+})
+
+-- ESP (Highlight Players)
+FunTab:CreateButton({
+    Name = "ESP Players",
+    Callback = function()
+        for i,v in pairs(game.Players:GetPlayers()) do
+            if v ~= game.Players.LocalPlayer and v.Character and not v.Character:FindFirstChildWhichIsA("Highlight") then
+                local highlight = Instance.new("Highlight")
+                highlight.Adornee = v.Character
+                highlight.FillColor = Color3.fromRGB(255,0,0)
+                highlight.OutlineColor = Color3.fromRGB(0,0,0)
+                highlight.Parent = v.Character
+            end
+        end
+        Rayfield:Notify({
+            Title = "Fun",
+            Content = "ESP activated!",
+            Duration = 3
+        })
+    end
+})
