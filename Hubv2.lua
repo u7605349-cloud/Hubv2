@@ -130,11 +130,13 @@ RunService.RenderStepped:Connect(function()
         local humanoid = player.Character:FindFirstChild("Humanoid")
         if humanoid then
             local move = humanoid.MoveDirection
-            local up = 0
-            if UserInputService:IsKeyDown(Enum.KeyCode.E) then up = 1
-            elseif UserInputService:IsKeyDown(Enum.KeyCode.Q) then up = -1
+            local y = 0
+            if UserInputService:IsKeyDown(Enum.KeyCode.E) then
+                y = 1
+            elseif UserInputService:IsKeyDown(Enum.KeyCode.Q) then
+                y = -1
             end
-            bv.Velocity = Vector3.new(move.X, up, move.Z) * flySpeed
+            bv.Velocity = Vector3.new(move.X, y, move.Z) * flySpeed
             bg.CFrame = Camera.CFrame
         end
     end
