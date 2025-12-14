@@ -12,6 +12,7 @@ local LocalPlayer = Players.LocalPlayer
 local UIS = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 
+-- MAIN TAB
 local MainTab = Window:CreateTab("🏠 Main", nil)
 MainTab:CreateSection("Player")
 
@@ -67,39 +68,64 @@ MainTab:CreateButton({
     end
 })
 
+-- FLY TAB
 local FlyTab = Window:CreateTab("🕊 Fly", nil)
 FlyTab:CreateSection("Fly Controls")
-local flying = false
-local flySpeed = 60
-local bv, bg, flyConn
-local move = {w=0,a=0,s=0,d=0,q=0,e=0}
 
-local function toggleFly(state)
-    flying = state
+local savedSpeed = 50
+local flying = false
+local flySpeed = savedSpeed
+local bodyVelocity
+local bodyGyro
+local move = {w=0, a=0, s=0, d=0, q=0, e=0}
+
+local function setupFly()
     local char = LocalPlayer.Character
     if not char then return end
-    local hrp = char:FindFirstChild("HumanoidRootPart")
-    if not hrp then return end
-    if flying then
-        bv = Instance.new("BodyVelocity", hrp)
-        bv.MaxForce = Vector3.new(1e5,1e5,1e5)
-        bg = Instance.new("BodyGyro", hrp)
-        bg.MaxTorque = Vector3.new(1e5,1e5,1e5)
-        bg.P = 1e4
-        flyConn = RunService.RenderStepped:Connect(function()
-            local cam = workspace.CurrentCamera
-            local dir = (cam.CFrame.LookVector*(move.w-move.s) + cam.CFrame.RightVector*(move.d-move.a) + Vector3.new(0,1,0)*(move.e-move.q))
-            if dir.Magnitude>0 then
-                bv.Velocity = dir.Unit*flySpeed
-            else
-                bv.Velocity = Vector3.zero
-            end
-            bg.CFrame = cam.CFrame
-        end)
-    else
-        if flyConn then flyConn:Disconnect() end
-        if bv then bv:Destroy() end
-        if bg then bg:Destroy() end
+    local HRP = char:WaitForChild("HumanoidRootPart")
+    local humanoid = char:WaitForChild("Humanoid")
+    local Camera = workspace.CurrentCamera
+
+    bodyVelocity = Instance.new("BodyVelocity")
+    bodyVelocity.MaxForce = Vector3.new(1e5,1e5,1e5)
+
+    bodyGyro = Instance.new("BodyGyro")
+    bodyGyro.MaxTorque = Vector3.new(1e5,1e5,1e5)
+
+    RunService:BindToRenderStep("FlyMovement", Enum.RenderPriority.Camera.Value, function()
+        if not flying then return end
+        local dir = Vector3.zero
+        local camCF = Camera.CFrame
+        if move.w ~= 0 then dir += camCF.LookVector * move.w end
+        if move.s ~= 0 then dir -= camCF.LookVector * move.s end
+        if move.a ~= 0 then dir -= camCF.RightVector * move.a end
+        if move.d ~= 0 then dir += camCF.RightVector * move.d end
+        if move.e ~= 0 then dir += Vector3.yAxis * move.e end
+        if move.q ~= 0 then dir -= Vector3.yAxis * move.q end
+        if dir.Magnitude > 0 then dir = dir.Unit end
+        bodyVelocity.Velocity = dir * flySpeed
+        bodyGyro.CFrame = camCF
+    end)
+end
+
+local function startFlying()
+    local char = LocalPlayer.Character
+    if not char then return end
+    local HRP = char:WaitForChild("HumanoidRootPart")
+    local humanoid = char:WaitForChild("Humanoid")
+    bodyVelocity.Parent = HRP
+    bodyGyro.Parent = HRP
+    humanoid.PlatformStand = true
+    flying = true
+end
+
+local function stopFlying()
+    flying = false
+    if bodyVelocity then bodyVelocity.Parent = nil end
+    if bodyGyro then bodyGyro.Parent = nil end
+    local char = LocalPlayer.Character
+    if char and char:FindFirstChild("Humanoid") then
+        char.Humanoid.PlatformStand = false
     end
 end
 
@@ -107,44 +133,56 @@ FlyTab:CreateToggle({
     Name = "Enable Fly",
     CurrentValue = false,
     Callback = function(Value)
-        toggleFly(Value)
+        flying = Value
+        if Value then
+            setupFly()
+            startFlying()
+        else
+            stopFlying()
+        end
     end
 })
 
 FlyTab:CreateSlider({
     Name = "Fly Speed",
-    Range = {10,200},
+    Range = {10, 200},
     Increment = 5,
-    CurrentValue = 60,
+    CurrentValue = savedSpeed,
     Suffix = "Speed",
     Callback = function(Value)
         flySpeed = Value
+        savedSpeed = Value
     end
 })
 
-UIS.InputBegan:Connect(function(i,g)
-    if g then return end
-    if i.KeyCode==Enum.KeyCode.W then move.w=1 end
-    if i.KeyCode==Enum.KeyCode.A then move.a=1 end
-    if i.KeyCode==Enum.KeyCode.S then move.s=1 end
-    if i.KeyCode==Enum.KeyCode.D then move.d=1 end
-    if i.KeyCode==Enum.KeyCode.E then move.e=1 end
-    if i.KeyCode==Enum.KeyCode.Q then move.q=1 end
+UIS.InputBegan:Connect(function(input, gpe)
+    if gpe then return end
+    if input.KeyCode == Enum.KeyCode.W then move.w = 1 end
+    if input.KeyCode == Enum.KeyCode.S then move.s = 1 end
+    if input.KeyCode == Enum.KeyCode.A then move.a = 1 end
+    if input.KeyCode == Enum.KeyCode.D then move.d = 1 end
+    if input.KeyCode == Enum.KeyCode.E then move.e = 1 end
+    if input.KeyCode == Enum.KeyCode.Q then move.q = 1 end
 end)
 
-UIS.InputEnded:Connect(function(i)
-    if i.KeyCode==Enum.KeyCode.W then move.w=0 end
-    if i.KeyCode==Enum.KeyCode.A then move.a=0 end
-    if i.KeyCode==Enum.KeyCode.S then move.s=0 end
-    if i.KeyCode==Enum.KeyCode.D then move.d=0 end
-    if i.KeyCode==Enum.KeyCode.E then move.e=0 end
-    if i.KeyCode==Enum.KeyCode.Q then move.q=0 end
+UIS.InputEnded:Connect(function(input)
+    if input.KeyCode == Enum.KeyCode.W then move.w = 0 end
+    if input.KeyCode == Enum.KeyCode.S then move.s = 0 end
+    if input.KeyCode == Enum.KeyCode.A then move.a = 0 end
+    if input.KeyCode == Enum.KeyCode.D then move.d = 0 end
+    if input.KeyCode == Enum.KeyCode.E then move.e = 0 end
+    if input.KeyCode == Enum.KeyCode.Q then move.q = 0 end
 end)
 
+LocalPlayer.CharacterAdded:Connect(function()
+    flying = false
+    setupFly()
+end)
+
+-- BLOX FRUITS TAB
 local BloxFruitsTab = Window:CreateTab("🍉 Blox Fruits", nil)
 BloxFruitsTab:CreateSection("Blox Fruits Scripts")
 
--- example: Kill Aura toggle
 local killAuraEnabled = false
 BloxFruitsTab:CreateToggle({
     Name = "Kill Aura",
@@ -168,7 +206,6 @@ BloxFruitsTab:CreateToggle({
 })
 
 local hideOtherPlayersEnabled = false
-
 local function hideCharacterForOthers()
     for _, player in pairs(Players:GetPlayers()) do
         if player ~= LocalPlayer and player.Character then
