@@ -73,6 +73,7 @@ local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPa
 local bv, bg = nil, nil
 local RunService = game:GetService("RunService")
 local Camera = workspace.CurrentCamera
+local UserInputService = game:GetService("UserInputService")
 
 local function startFly()
     local char = player.Character
@@ -128,7 +129,12 @@ RunService.RenderStepped:Connect(function()
     if flying and hrp and bv and bg and player.Character then
         local humanoid = player.Character:FindFirstChild("Humanoid")
         if humanoid then
-            bv.Velocity = Camera.CFrame:VectorToWorldSpace(humanoid.MoveDirection) * flySpeed
+            local move = humanoid.MoveDirection
+            local up = 0
+            if UserInputService:IsKeyDown(Enum.KeyCode.E) then up = 1
+            elseif UserInputService:IsKeyDown(Enum.KeyCode.Q) then up = -1
+            end
+            bv.Velocity = Vector3.new(move.X, up, move.Z) * flySpeed
             bg.CFrame = Camera.CFrame
         end
     end
